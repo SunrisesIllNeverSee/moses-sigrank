@@ -171,6 +171,35 @@ button.primary:hover, #compute-btn:hover { background: #d8a449 !important; }
   display: flex; justify-content: space-between;
 }
 
+/* parsing mode badge on trading card */
+.sig-card-mode {
+  font-size: 8px; color: var(--moses-dim); letter-spacing: 0.06em;
+  margin-bottom: 10px; padding: 2px 6px;
+  border: 1px dashed var(--moses-line); border-radius: 2px;
+  display: inline-block;
+}
+
+/* estimation asterisk on board rows */
+.mb-est { color: var(--moses-gold); font-weight: 700; font-size: 10px; cursor: help; }
+
+/* greatest hits table */
+.greatest-hits { margin: 16px 0; }
+.greatest-hits h4 { color: var(--moses-gold); font-size: 13px; letter-spacing: 0.08em; margin-bottom: 8px; }
+.greatest-hits table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.greatest-hits th {
+  color: var(--moses-gold); font-size: 9px; letter-spacing: 0.06em;
+  text-transform: uppercase; text-align: left; padding: 6px 8px;
+  border-bottom: 1px solid var(--moses-gold);
+}
+.greatest-hits td {
+  color: var(--moses-dim); padding: 6px 8px;
+  border-bottom: 1px solid var(--moses-line);
+}
+.greatest-hits tr:first-child td { color: var(--moses-ink); }
+
+/* HF login button styling */
+#hf-login-btn { margin-bottom: 8px; }
+
 footer { display: none !important; }
 
 @media (max-width: 700px) {

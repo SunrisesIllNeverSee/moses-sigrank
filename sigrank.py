@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 
-from ingest import ingest_meta
+from ingest import ingest_meta, parse_ccusage
 from metrics import compute
 import db
 
@@ -144,22 +144,21 @@ def main(argv=None):
 
     color = sys.stdout.isatty() and not args.no_color
 
-    # For Codex: compute Claude's real I/O ratio first and use it as anchor.
-    io_ratio = None
+    # For Codex: detect Claude profile so the parser uses 1:9 pathway.
+    operator_profile = None
     if args.codex:
         try:
-            from ingest import parse_ccusage as _pcc
             _c_args = type("a", (), {"file": None, "stdin": False, "codex": False})()
             _c_raw, _ = _grab_usage(_c_args)
-            _ci, _co, _, _, _ = _pcc(_c_raw)
+            _ci, _co, _, _, _ = parse_ccusage(_c_raw)
             if _co > 0:
-                io_ratio = _ci / _co
+                operator_profile = {"model_type": "claude", "io_ratio": _ci / _co}
         except Exception:
-            pass  # fall back to 2:1
+            pass  # no Claude data — Alpha pathway (3:2:1)
 
     try:
         raw, how = _grab_usage(args)
-        i, o, cw, cr, meta = ingest_meta(raw, io_ratio=io_ratio)
+        i, o, cw, cr, meta = ingest_meta(raw, operator_profile=operator_profile)
     except Exception as e:
         print(f"sigrank: {e}", file=sys.stderr)
         return 1

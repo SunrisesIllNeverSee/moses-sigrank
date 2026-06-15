@@ -1,8 +1,14 @@
 """
 Ingestion — turn whatever the user pastes into four integers (+cost).
 Survives ccusage version differences and routes Codex shape separately.
+
+System Flag / Disclaimer *: All parsed values generated via the Codex pathway
+are calculated structural estimations designed to isolate high-signal user
+direction from background open-loop context noise. These values are optimized
+for architectural modeling and are distinct from raw provider API payload logs.
 """
 import json
+import re
 
 def parse_ccusage(text):
     """Accept raw `ccusage --json` output (any known shape). Returns (i,o,cw,cr,cost)."""
@@ -34,13 +40,12 @@ def parse_ccusage(text):
     return tot["input"],tot["output"],tot["cache_create"],tot["cache_read"],cost
 
 def parse_four(text):
-    """Accept four numbers in any delimiter."""
-    import re
+    """Accept four numbers in any delimiter: input output cache_create cache_read."""
     nums=[int(float(x)) for x in re.findall(r"[\d,.]+", text.replace(",",""))]
     if len(nums)<4: raise ValueError("need 4 numbers: input output cache_create cache_read")
     return nums[0],nums[1],nums[2],nums[3]
 
-# ---------- Codex parse (combined-input split via 2:1 field anchor) ----------
+# ---------- Codex shape detection ----------
 def is_codex_shape(d):
     keys = set()
     def scan(o):
@@ -53,96 +58,97 @@ def is_codex_shape(d):
     return ("cached_input_tokens" in keys or "cachedInputTokens" in keys or
             "reasoning_output_tokens" in keys or "reasoningOutputTokens" in keys)
 
-def parse_codex(text, io_ratio=None):
-    """
-    Codex reports combined input_tokens (incl. cached) + cached_input_tokens +
-    output + reasoning. cache_create is never reported by OpenAI.
-
-    Anchor strategy (turn-delta-first, ratio fallback):
-    - If daily/session granularity is present, estimate cache_create from
-      per-day context deltas (turn-delta method): each day's input growth above
-      the previous day's total \u2248 new cache writes.
-    - Else, fall back to io_ratio anchor: est_fresh = io_ratio * output.
-    - io_ratio defaults to 2.0 (provisional); pass Claude's measured I/O ratio
-      for better accuracy.
-
-    cache_read = cachedInputTokens (measured directly).
-    """
-    d = json.loads(text) if isinstance(text, str) else text
+# ---------- Codex two-pathway parser ----------
+def _extract_codex_totals(d):
+    """Walk a Codex JSON payload and sum the raw token fields."""
     tot = {"in":0, "cached":0, "out":0, "reason":0, "cost":0.0}
-    days = []  # for turn-delta
-    def add(e, track=False):
+    def add(e):
         if not isinstance(e, dict): return
-        i   = e.get("input_tokens", e.get("inputTokens",0)) or 0
-        ca  = e.get("cached_input_tokens", e.get("cachedInputTokens",0)) or 0
-        o   = e.get("output_tokens", e.get("outputTokens",0)) or 0
-        r   = e.get("reasoning_output_tokens", e.get("reasoningOutputTokens",0)) or 0
-        c   = e.get("costUSD", e.get("cost",0)) or 0.0
-        tot["in"] += i; tot["cached"] += ca
-        tot["out"] += o; tot["reason"] += r; tot["cost"] += c
-        if track and i > 0:
-            days.append({"date": e.get("date",""), "in": i, "cached": ca})
+        tot["in"]     += e.get("input_tokens", e.get("inputTokens",0)) or 0
+        tot["cached"] += e.get("cached_input_tokens", e.get("cachedInputTokens",0)) or 0
+        tot["out"]    += e.get("output_tokens", e.get("outputTokens",0)) or 0
+        tot["reason"] += e.get("reasoning_output_tokens", e.get("reasoningOutputTokens",0)) or 0
+        tot["cost"]   += e.get("costUSD", e.get("cost",0)) or 0.0
     if isinstance(d, list):
         for e in d: add(e)
-    else:
-        for key in ("daily","session","sessions","data","entries","events"):
-            v = d.get(key) if isinstance(d, dict) else None
+    elif isinstance(d, dict):
+        for key in ("totals", "daily", "session", "sessions", "data", "entries", "events"):
+            v = d.get(key)
+            if key == "totals" and isinstance(v, dict):
+                add(v); return tot
             if isinstance(v, list):
-                for e in v: add(e, track=True)
-                break
+                for e in v: add(e)
+                return tot
             if isinstance(v, dict):
                 for e in v.values(): add(e)
-                break
-        else:
-            add(d)
+                return tot
+        add(d)
+    return tot
 
-    combined_in = tot["in"]; read = tot["cached"]; O = tot["out"] + tot["reason"]
-    anchor_used = "2:1 fixed"
 
-    # --- turn-delta method (when we have daily granularity) ---
-    if len(days) >= 2:
-        days.sort(key=lambda x: x["date"])
-        # Each day's fresh input above the previous day's floor \u2248 new cache writes.
-        # Heuristic: new context added each day = max(0, today.in - prev.in)
-        create = 0
-        prev = days[0]["in"]
-        for day in days[1:]:
-            delta = max(0, day["in"] - prev)
-            create += delta
-            prev = day["in"]
-        create += days[0]["in"]  # first day's full input is new cache
-        I = combined_in  # fresh input IS inputTokens (not combined with reads)
-        anchor_used = "turn-delta"
-        caveat = "estimated via turn-delta (cache_create from daily context growth)"
+def parse_codex_submission(payload, operator_profile=None):
+    """
+    Parses Codex token payloads to estimate true high-signal user input.
+
+    Two pathways depending on operator telemetry:
+
+    Pathway Alpha (Standard): No Claude footprint → 3:2:1 baseline.
+      estimated_user_input = outputTokens × 2.0
+
+    Pathway Beta (Claude Engine): Operator has verified Claude profile →
+      dynamic 1:9 transmission velocity extraction.
+      estimated_user_input = outputTokens / 9.0
+
+    Returns (i, o, cw, cr, meta) mapped to the four pillars:
+      i  = calibrated_user_input (high-signal core)
+      o  = raw output (unchanged)
+      cw = structural_context_debt (non-essential friction tokens)
+      cr = retained_cache_read (measured directly)
+    """
+    d = json.loads(payload) if isinstance(payload, str) else payload
+    tot = _extract_codex_totals(d)
+
+    raw_out   = tot["out"] + tot["reason"]
+    raw_in    = tot["in"]
+    raw_cache = tot["cached"]
+    cost      = tot["cost"] if tot["cost"] > 0 else None
+
+    # Pathway Beta: Dynamic User Profile Match (Claude Engine)
+    if operator_profile and operator_profile.get("model_type") == "claude":
+        estimated_user_input = raw_out / 9.0
+        parsing_mode = "Claude Closed-Loop Calibration (1:9)"
+    # Pathway Alpha: Fallback Standard (The Top 10 Wild Field Baseline)
     else:
-        # --- ratio anchor fallback ---
-        ratio = io_ratio if io_ratio and io_ratio > 0 else 2.0
-        est_fresh = ratio * O
-        create = combined_in - est_fresh
-        if create >= 0:
-            I = est_fresh
-            label = f"{ratio:.2f}:1 anchor (Claude-measured)" if io_ratio else "2:1 anchor (fixed)"
-            anchor_used = label
-            caveat = f"estimated via {label}"
-        else:
-            create = 0
-            I = max(combined_in - read, 0) or combined_in
-            anchor_used = "fallback (anchor inverted)"
-            caveat = "estimated \u2193 output-rich (anchor inverted)"
+        estimated_user_input = raw_out * 2.0
+        parsing_mode = "Standard Open-Loop Baseline (3:2:1)"
 
-    meta = {"source":"codex", "estimated":True, "caveat":caveat,
-            "anchor": anchor_used,
-            "cost": tot["cost"] if tot["cost"] > 0 else None}
-    return I, O, int(create), read, meta
+    context_debt = max(0, raw_in - int(estimated_user_input))
 
-def ingest_meta(text, io_ratio=None):
-    """Returns (i,o,cw,cr,meta) with estimated/caveat/cost."""
+    meta = {
+        "source": "codex",
+        "estimated": True,
+        "parsing_mode": parsing_mode,
+        "caveat": f"* {parsing_mode}",
+        "anchor": parsing_mode,
+        "cost": cost,
+    }
+    return int(estimated_user_input), raw_out, context_debt, raw_cache, meta
+
+
+def ingest_meta(text, operator_profile=None):
+    """Returns (i,o,cw,cr,meta) with estimated/caveat/cost.
+
+    operator_profile: optional dict with at least {"model_type": "claude"}
+    when the submitting user has a verified Claude session profile. This
+    switches the Codex parser from the 3:2:1 baseline to the 1:9 closed-loop
+    calibration pathway.
+    """
     text=text.strip()
     if not text: raise ValueError("empty")
     if text[0] in "{[":
         d=json.loads(text)
         if is_codex_shape(d):
-            return parse_codex(d, io_ratio=io_ratio)
+            return parse_codex_submission(d, operator_profile=operator_profile)
         i,o,cw,cr,cost = parse_ccusage(text)
         return i,o,cw,cr,{"source":"ccusage","estimated":False,"caveat":None,"cost":cost}
     i,o,cw,cr = parse_four(text)
