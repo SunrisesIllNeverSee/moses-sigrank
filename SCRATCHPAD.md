@@ -40,6 +40,21 @@ cd /Users/dericmchenry/Desktop/moses-sigrank
 
 ## WORK LOG (newest first)
 
+### Devin session — 2026-06-15 (visual upgrade)
+- [done] theme.py CSS upgrade — brighter default bar gradient (0.28→0.72), `.mb-row.rank1`
+  gold left-border + dominant #1 row, colored rank numbers (`.mb-rank-1/2/3`), hero upgrade
+  (32px title, `#moses-stat-strip`), `.mb-raw` color #5f573f→#7a7060, `.comp-bar` composition
+  bar, full `.sig-card` trading-card styles, and a `@media (max-width:700px)` mobile rule that
+  hides velocity/leverage columns.
+- [done] app.py UI upgrade — hero stat strip HTML; `board_html()` now adds `rank1` class to row 1
+  and `mb-rank-{1,2,3}` spans for the top 3; new `comp_bar_html(c)` and `card_html(name,m,rank,
+  total_ops,narration_text)` helpers (+ `_first_sentence` quote truncation); `profile_md` drops the
+  text composition line and accepts an optional `read` so narrate() runs once; "Share card" section
+  (gr.HTML) added to Measure-yourself tab; `run_ingest` now returns 4 outputs (profile, comp bar,
+  card, board); footer simplified (formula soup removed — belongs in README "How the numbers work").
+- [done] Verify green: `py_compile` all *.py OK · comp_bar/card/board helpers render · board contains
+  rank1 + mb-rank-1/2/3 · run_ingest returns 4 values · narrate template fallback confirmed (no torch).
+
 ### Devin session — 2026-06-15
 - [done] GPU FIX — applied `@GPU` decorator to `narrate()` in narrate.py (line 60).
   ZeroGPU needs the inference function decorated or GPU alloc never happens and the
