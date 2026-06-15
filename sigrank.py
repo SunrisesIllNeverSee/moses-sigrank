@@ -143,9 +143,23 @@ def main(argv=None):
     args.stdin = args.stdin_dash == "-"
 
     color = sys.stdout.isatty() and not args.no_color
+
+    # For Codex: compute Claude's real I/O ratio first and use it as anchor.
+    io_ratio = None
+    if args.codex:
+        try:
+            from ingest import parse_ccusage as _pcc
+            _c_args = type("a", (), {"file": None, "stdin": False, "codex": False})()
+            _c_raw, _ = _grab_usage(_c_args)
+            _ci, _co, _, _, _ = _pcc(_c_raw)
+            if _co > 0:
+                io_ratio = _ci / _co
+        except Exception:
+            pass  # fall back to 2:1
+
     try:
         raw, how = _grab_usage(args)
-        i, o, cw, cr, meta = ingest_meta(raw)
+        i, o, cw, cr, meta = ingest_meta(raw, io_ratio=io_ratio)
     except Exception as e:
         print(f"sigrank: {e}", file=sys.stderr)
         return 1

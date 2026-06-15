@@ -4,6 +4,7 @@ Operator pastes ccusage/codex output -> ingestion -> full profile + board placem
 Board ranks by Net Volumetric Yield (Υ). Four raw integers drive everything.
 """
 import gradio as gr
+import html as _html
 import math as _math
 import re as _re
 from metrics import compute, SEED
@@ -60,9 +61,11 @@ def board_html(extra=None):
         d=f"{m['dev10x']:.2f}" if m['dev10x'] is not None else "\u2014"
         rank_cls = f"mb-rank-{i}" if i <= 3 else ""
         cls = "mb-row you" if you else ("mb-row rank1" if i==1 else "mb-row")
+        ne = _html.escape(n)
+        est_mark = " <span class='mb-est' title='estimated (Codex anchor)'>~</span>" if m.get("cost_estimated") else ""
         out.append(f'<div class="{cls}">'
             f'<span class="mb-rank {rank_cls}">{i}</span>'
-            f'<span class="mb-op"><b>{n}</b><br><span class="mb-raw">R {_fmt_int(m["raw"]["cache_read"])} \u00b7 C {_fmt_int(m["raw"]["cache_create"])} \u00b7 I {_fmt_int(m["raw"]["input"])} \u00b7 O {_fmt_int(m["raw"]["output"])}</span></span>'
+            f'<span class="mb-op"><b>{ne}{est_mark}</b><br><span class="mb-raw">R {_fmt_int(m["raw"]["cache_read"])} \u00b7 C {_fmt_int(m["raw"]["cache_create"])} \u00b7 I {_fmt_int(m["raw"]["input"])} \u00b7 O {_fmt_int(m["raw"]["output"])}</span></span>'
             f'<span class="mb-num">{m["snr"]:.3f}</span>'
             f'<span class="mb-num">{d}</span>'
             f'<span class="mb-num">{m["velocity"]:.2f}</span>'
