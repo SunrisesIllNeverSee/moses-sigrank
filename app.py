@@ -5,6 +5,7 @@ Board ranks by Net Volumetric Yield (Υ). Four raw integers drive everything.
 """
 import gradio as gr
 import math as _math
+import re as _re
 from metrics import compute, SEED
 from ingest import ingest_meta
 from theme import CSS
@@ -57,9 +58,10 @@ def board_html(extra=None):
         orders=_math.log10(ymax/y) if y>0 else 99
         barpct=max(2,100*(1-orders/5))
         d=f"{m['dev10x']:.2f}" if m['dev10x'] is not None else "\u2014"
-        cls="mb-row you" if you else "mb-row"
+        rank_cls = f"mb-rank-{i}" if i <= 3 else ""
+        cls = "mb-row you" if you else ("mb-row rank1" if i==1 else "mb-row")
         out.append(f'<div class="{cls}">'
-            f'<span class="mb-rank">{i}</span>'
+            f'<span class="mb-rank {rank_cls}">{i}</span>'
             f'<span class="mb-op"><b>{n}</b><br><span class="mb-raw">R {_fmt_int(m["raw"]["cache_read"])} \u00b7 C {_fmt_int(m["raw"]["cache_create"])} \u00b7 I {_fmt_int(m["raw"]["input"])} \u00b7 O {_fmt_int(m["raw"]["output"])}</span></span>'
             f'<span class="mb-num">{m["snr"]:.3f}</span>'
             f'<span class="mb-num">{d}</span>'
@@ -82,11 +84,61 @@ def classify(m):
     if v>=0.8 and l<2:  return "Volatile Ingestor \u00b7 generates, doesn't retain"
     return "Transient \u00b7 low on both axes"
 
-def profile_md(name, m, rank, total_ops):
+def comp_bar_html(c):
+    return (f'<div class="comp-bar">'
+            f'<div class="comp-read" style="width:{c["read"]:.1f}%"></div>'
+            f'<div class="comp-create" style="width:{c["create"]:.1f}%"></div>'
+            f'<div class="comp-output" style="width:{c["output"]:.1f}%"></div>'
+            f'<div class="comp-input" style="width:{c["input"]:.3f}%"></div>'
+            f'</div>'
+            f'<div style="font-size:10px;color:#8a7f68;margin-bottom:8px">'
+            f'read {c["read"]:.1f}% \u00b7 create {c["create"]:.1f}% \u00b7 output {c["output"]:.1f}% \u00b7 input {c["input"]:.3f}%'
+            f'</div>')
+
+def _first_sentence(text, limit=120):
+    t = _re.sub(r"[*_`>#]", "", text or "").replace("\n", " ").strip()
+    parts = _re.split(r"(?<=[.!?])\s", t, maxsplit=1)
+    s = parts[0] if parts else t
+    if len(s) > limit:
+        s = s[:limit].rstrip() + "\u2026"
+    return s
+
+def card_html(name, m, rank, total_ops, narration_text):
+    archetype = classify(m).split("\u00b7")[0].strip()
+    c = m["composition"]
+    if m["transmission"] is not None:
+        cascade = (
+            f'<div class="sig-card-cascade-box">{m["transmission"]:.1f}\u00d7<small>trans</small></div>'
+            f'<span class="sig-card-cascade-arrow">\u2192</span>'
+            f'<div class="sig-card-cascade-box">{m["commitment"]:.1f}\u00d7<small>commit</small></div>'
+            f'<span class="sig-card-cascade-arrow">\u2192</span>'
+            f'<div class="sig-card-cascade-box">{m["reuse"]:.1f}\u00d7<small>reuse</small></div>'
+            f'<span class="sig-card-cascade-arrow">=</span>'
+            f'<div class="sig-card-cascade-box">{m["leverage"]:,.0f}\u00d7<small>leverage</small></div>'
+        )
+    else:
+        cascade = '<div class="sig-card-cascade-box">\u2014<small>non-compounding</small></div>'
+    quote = _first_sentence(narration_text)
+    return (
+        '<div class="sig-card">'
+        '<div class="sig-card-watermark">MO\u00a7ES\u2122 SIGRANK</div>'
+        f'<div class="sig-card-name">{name}</div>'
+        f'<div class="sig-card-archetype">{archetype}</div>'
+        f'<div class="sig-card-yield">{m["yield"]:,.0f}</div>'
+        '<div class="sig-card-yield-label">net volumetric yield</div>'
+        f'<div class="sig-card-rank">#<span>{rank}</span> of {total_ops} operators</div>'
+        f'<div class="sig-card-cascade">{cascade}</div>'
+        f'{comp_bar_html(c)}'
+        f'<div class="sig-card-quote">{quote}</div>'
+        '<div class="sig-card-footer"><span>sigrank.hf.space</span><span>\u03a5=(C\u00b7O)/I\u00b2</span></div>'
+        '</div>'
+    )
+
+def profile_md(name, m, rank, total_ops, read=None):
     c=m["composition"]; r=m["raw"]
     d=f"{m['dev10x']:.3f}" if m['dev10x'] is not None else "\u2014 non-compounding (no cache_create)"
-    klass = classify(m)
-    read = narrate(name, m, klass)
+    if read is None:
+        read = narrate(name, m, classify(m))
     cav = m.get("_caveat")
     cav_line = f"\n\n`\u26a0 {cav}`" if cav else ""
     cost_note = " (list-price estimate)" if m.get("cost_estimated") else " (from ccusage)"
@@ -103,8 +155,6 @@ ranked **#{rank}** of {total_ops} by \u03a5{cav_line}
 | cache_create | {r['cache_create']:,} |
 | cache_read | {r['cache_read']:,} |
 | **total** | **{m['total']:,}** |
-
-composition — read {c['read']:.2f}% \u00b7 create {c['create']:.2f}% \u00b7 output {c['output']:.2f}% \u00b7 input {c['input']:.3f}%
 
 ### board metrics
 | metric | value | |
@@ -131,9 +181,9 @@ def run_ingest(blob, name):
         return ("Paste your `npx ccusage@latest --json` output, your "
                 "`ccusage codex --json` output, or four numbers: "
                 "input output cache_create cache_read.\n\n"
-                f"_parser said: {e}_"), board_html()
+                f"_parser said: {e}_"), "", "", board_html()
     if i+o+cw+cr==0:
-        return "Got zeros — check your paste.", board_html()
+        return "Got zeros — check your paste.", "", "", board_html()
     m=compute(i,o,cw,cr, cost_usd=meta.get("cost"))
     if meta.get("estimated"):
         m["_caveat"]=meta.get("caveat")
@@ -148,7 +198,11 @@ def run_ingest(blob, name):
     rows=[(nn,compute(*vv)) for nn,vv in base.items() if nn!=name]+[(name,m)]
     rows.sort(key=lambda r:r[1]['yield'],reverse=True)
     rank=next(idx for idx,(nn,_) in enumerate(rows,1) if nn==name)
-    return profile_md(name,m,rank,len(rows)), board_html((name,m))
+    read = narrate(name, m, classify(m))
+    return (profile_md(name,m,rank,len(rows),read),
+            comp_bar_html(m["composition"]),
+            card_html(name,m,rank,len(rows),read),
+            board_html((name,m)))
 
 # ---------- UI ----------
 _blocks_kw = {"title": "MO\u00a7ES SigRank"}
@@ -160,6 +214,11 @@ with _b as demo:
     with gr.Column(elem_id="moses-hero"):
         gr.HTML("<h1>MO§ES\u2122 SigRank</h1>"
                 "<p>the diagnostic x-ray of the token economy \u00b7 ranked by \u03a5 (Net Volumetric Yield) \u00b7 volume can't buy rank</p>")
+        gr.HTML('<div id="moses-stat-strip">'
+                '<div>operators ranked <span>7</span></div>'
+                '<div>MO§ES leads by <span>3,141\u00d7</span></div>'
+                '<div>architecture beats budget</div>'
+                '</div>')
 
     with gr.Tab("Leaderboard"):
         gr.Markdown("Ranked by **Υ = (Cache·Output)/Input²**. Raw Read·Create·In·Out stacked under each operator. $/1M is blended cost — efficient architecture is also the cheapest.")
@@ -182,10 +241,14 @@ with _b as demo:
                           placeholder='{"totals":{"inputTokens":...}}   or   1251211 11296121 128196310 2555179769')
         go = gr.Button("Compute my SigRank", variant="primary", elem_id="compute-btn")
         prof = gr.Markdown(elem_id="moses-profile")
+        prof_bar = gr.HTML()
+        gr.Markdown("### share card")
+        card = gr.HTML()
+        gr.Markdown("*Screenshot to share \u00b7 right-click \u2192 Save image*", elem_id="moses-foot")
         gr.Markdown("### your placement")
         gr.Markdown("*Live placement against the curated field — your row is transient (not saved to the board).*", elem_id="moses-foot")
         ob = gr.HTML(board_html())
-        go.click(run_ingest, [blob, nm], [prof, ob])
+        go.click(run_ingest, [blob, nm], [prof, prof_bar, card, ob])
         gr.Examples(
             examples=[
                 ['{"totals":{"inputTokens":1251211,"outputTokens":11296121,"cacheCreationTokens":128196310,"cacheReadTokens":2555179769}}','MO§ES'],
@@ -193,10 +256,9 @@ with _b as demo:
             ],
             inputs=[blob, nm])
 
-    gr.Markdown(elem_id="moses-foot", value="""**Four integers in, full ledger out.** input · output · cache_create · cache_read.
-SNR=O/(I+O) · 10x DEV=log₁₀(cascade) · Velocity=O/I · Leverage=C/I ·
-Efficiency=(C+O)/I÷4 · Avg $/1M=blended cost · Υ=(C·O)/I². Wild-corpus values
-provisional; MO§ES row from verified ccusage data. Codex rows estimated via 2:1 anchor.""")
+    gr.Markdown(elem_id="moses-foot", value="""Four integers in, full ledger out. 
+Architecture is the only variable that matters. 
+Wild-corpus values provisional · MO§ES row verified ccusage · [How it works ↗](#)""")
 
 if __name__ == "__main__":
     try:
