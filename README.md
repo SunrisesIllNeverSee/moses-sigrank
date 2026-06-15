@@ -215,11 +215,13 @@ cheapest per token, by an order of magnitude.
   (owner-seeded). The board is backed by Supabase with a hardcoded-seed fallback,
   so it renders identically even if the database is unreachable.
 - **Cost provenance.** The board's `$/1M` is a list-price recompute for every
-  corpus row (shown with `~`); only the **live ccusage paste** path surfaces real
-  blended cost. MO§ES's verified ccusage cost is **$0.527**, which the list-price
-  recompute reproduces exactly. The six wild operators have no real cost data.
-- Wild-corpus operator values are provisional (public tokscale footprints);
-  MO§ES row is verified ccusage data.
+  corpus row (shown with `~`) so all rows compare apples-to-apples; only the
+  **live ccusage paste** path surfaces real blended cost. MO§ES's verified ccusage
+  cost is **$0.527**, which the list-price recompute reproduces exactly.
+- **Wild corpus (10 operators).** Public ccusage footprints from the
+  [tokscale.ai](https://tokscale.ai) leaderboard. Their published real cost is kept
+  in Supabase (`cost_usd`) but the board shows the list-price `~` recompute for
+  consistency with every other row. MO§ES is verified ccusage data, not tokscale.
 - Υ is an engineered macro-efficiency index motivated by thermodynamics
   (Landauer, Ohmic dissipation); log Υ = X + log(Velocity). An analogy, not a
   microscopic-entropy derivation.

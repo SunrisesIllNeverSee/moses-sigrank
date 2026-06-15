@@ -67,18 +67,27 @@ def compute(i, o, cw, cr, cost_usd=None, prices=None):
     }
 
 # seed corpus + hardcoded fallback for db.load_operators() (do NOT delete — safety net).
-# Cost provenance: SEED rows carry only the four token integers, so the board's
-# $/1M is a list-price recompute (~) for ALL rows. MO§ES happens to reproduce its
-# verified ccusage cost ($0.527); the 6 wild operators have no real cost data.
-# Real blended cost only appears on the live ccusage paste path (cost_usd passed in).
+#
+# WILD CORPUS SOURCE: the 10 wild operators are public ccusage footprints published
+# on the tokscale.ai leaderboard (https://tokscale.ai). Each row is stored as the four
+# token pillars (input, output, cache_create, cache_read). Real blended cost for these
+# operators is also published on tokscale (kept in Supabase `cost_usd`); the board,
+# however, recomputes $/1M at list price (~) for ALL corpus rows for apples-to-apples
+# comparison. Real cost only appears on the live ccusage paste path (cost_usd passed in).
+# MO§ES is verified ccusage data (not tokscale) and reproduces its real cost ($0.527).
 SEED = {
-    "MO§ES (ccusage)": (1_251_211, 11_296_121, 128_196_310, 2_555_179_769),
-    "vincentkoc":  (6_600_000_000, 342_700_000, 223_700_000, 195_000_000_000),
-    "MapleEve":    (34_800_000_000, 2_800_000_000, 550_100_000, 794_600_000_000),
-    "kzquandary":  (118_400_000_000, 5_900_000_000, 0, 1_066_000_000_000),
-    "iamtheavoc1": (989_500_000_000, 1_272_000_000_000, 0, 4_524_000_000_000),
-    "Nepomuk5665": (4_037_000_000_000, 1_259_000_000_000, 96_300_000_000, 1_658_000_000_000),
-    "cexll":       (67_700_000_000, 64_000_000_000, 217_800_000, 36_900_000_000),
+    "MO§ES (ccusage)":          (1_251_211, 11_296_121, 128_196_310, 2_555_179_769),
+    # ---- wild corpus (tokscale.ai) — (input, output, cache_create, cache_read) ----
+    "vincentkoc":               (10_000, 500, 6_530, 295_500),
+    "ben (@cexll)":             (10_000, 9_500, 30, 5_500),
+    "MapleEve":                 (1_000, 80, 196, 22_800),
+    "Nepomuk5665":              (50_000, 1_200, 500, 15_000),
+    "Ólafur Nils Sigurðsson":   (20_500_000, 1_900_000, 1_400_000, 572_400_000),
+    "Ivan Golovach":            (17_000_000, 1_300_000, 352, 512_000_000),
+    "Feng GAO":                 (26_500_000, 2_000_000, 238, 471_000_000),
+    "steve wu":                 (164_100_000, 26_000_000, 170_100, 296_800_000),
+    "Max Ghenis":               (16_100_000, 1_100_000, 1_000_000, 358_100_000),
+    "Sylvain Tissier":          (8_300_000, 495_200, 111_400, 210_600_000),
 }
 
 if __name__ == "__main__":
