@@ -60,7 +60,13 @@ def board_html(extra=None):
         barpct=max(2,100*(1-orders/5))
         d=f"{m['dev10x']:.2f}" if m['dev10x'] is not None else "\u2014"
         rank_cls = f"mb-rank-{i}" if i <= 3 else ""
-        cls = "mb-row you" if you else ("mb-row rank1" if i==1 else "mb-row")
+        rkey = rarity_class(m)[0]
+        if you:
+            cls = f"mb-row rarity-{rkey} you"
+        elif i == 1:
+            cls = f"mb-row rarity-{rkey} rank1"
+        else:
+            cls = f"mb-row rarity-{rkey}"
         ne = _html.escape(n)
         est_mark = " <span class='mb-est' title='estimated (Codex anchor)'>~</span>" if m.get("cost_estimated") else ""
         out.append(f'<div class="{cls}">'
@@ -87,6 +93,32 @@ def classify(m):
     if v>=0.8 and l<2:  return "Volatile Ingestor \u00b7 generates, doesn't retain"
     return "Transient \u00b7 low on both axes"
 
+def rarity_class(m):
+    """Returns (rarity_key, label, passive, effect).
+    MYTHIC > EPIC > RARE > COMMON based on velocity/leverage axes.
+    Mirrors the user's trading-card design: four species of greatness.
+    """
+    v, l = m["velocity"], m["leverage"]
+    if v >= 1 and l >= 100:
+        return ("mythic", "MYTHIC",
+                "Compound Interest",
+                "Multipliers stack. Transmission \u00d7 Commitment \u00d7 Reuse = Leverage. "
+                "The rare operator the leverage/generation tradeoff says shouldn\u2019t exist.")
+    if l >= 10 and v < 1:
+        return ("epic", "EPIC",
+                "Persistent Memory",
+                "Builds reusable structures. Each cache write is read many times. "
+                "Holds context beautifully \u2014 the architecture compounds without the velocity.")
+    if v >= 0.5:
+        return ("rare", "RARE",
+                "Direct Production",
+                "Strong input-to-output conversion. Fast on single shots. "
+                "Memory doesn\u2019t persist into a compounding loop.")
+    return ("common", "COMMON",
+            "Mass Transit",
+            "Moves enormous token mass. Volume is the strategy. "
+            "Amplification is not the goal \u2014 scale is.")
+
 def comp_bar_html(c):
     return (f'<div class="comp-bar">'
             f'<div class="comp-read" style="width:{c["read"]:.1f}%"></div>'
@@ -108,6 +140,7 @@ def _first_sentence(text, limit=120):
 
 def card_html(name, m, rank, total_ops, narration_text):
     archetype = classify(m).split("\u00b7")[0].strip()
+    rkey, rlabel, passive, effect = rarity_class(m)
     c = m["composition"]
     if m["transmission"] is not None:
         cascade = (
@@ -123,10 +156,13 @@ def card_html(name, m, rank, total_ops, narration_text):
         cascade = '<div class="sig-card-cascade-box">\u2014<small>non-compounding</small></div>'
     quote = _first_sentence(narration_text)
     return (
-        '<div class="sig-card">'
+        f'<div class="sig-card rarity-{rkey}">'
         '<div class="sig-card-watermark">MO\u00a7ES\u2122 SIGRANK</div>'
+        f'<div class="sig-card-rarity rarity-{rkey}">{rlabel}</div>'
         f'<div class="sig-card-name">{name}</div>'
         f'<div class="sig-card-archetype">{archetype}</div>'
+        f'<div class="sig-card-passive">Passive: {passive}</div>'
+        f'<div class="sig-card-effect">{effect}</div>'
         f'<div class="sig-card-yield">{m["yield"]:,.0f}</div>'
         '<div class="sig-card-yield-label">net volumetric yield</div>'
         f'<div class="sig-card-rank">#<span>{rank}</span> of {total_ops} operators</div>'
