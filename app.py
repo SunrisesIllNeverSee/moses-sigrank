@@ -328,6 +328,18 @@ def view_operator(name):
 import os as _os
 _ON_SPACE = bool(_os.environ.get("SPACE_ID"))
 
+# Ghost/"unminted" card so the right column is never an empty void on first load.
+CARD_PLACEHOLDER = (
+    '<div class="sig-card rarity-common" id="ghost-card">'
+    '<div class="sig-card-watermark">MO§ES™ SIGRANK</div>'
+    '<div class="sig-card-rarity rarity-common">UNMINTED</div>'
+    '<div class="sig-card-name">Awaiting Operator…</div>'
+    '<div class="sig-card-archetype">Signal Offline</div>'
+    '<div class="sig-card-yield">0,000</div>'
+    '<div class="sig-card-yield-label">insert token ledger to scan</div>'
+    '</div>'
+)
+
 def _build_demo():
     _blocks_kw = {"title": "MO\u00a7ES SigRank"}
     try:
@@ -342,79 +354,74 @@ def _build_demo():
     with _b:
         with gr.Column(elem_id="moses-hero"):
             gr.HTML("<h1>MO\u00a7ES\u2122 SigRank</h1>"
-                    "<p>the diagnostic x-ray of the token economy \u00b7 ranked by \u03a5 (Net Volumetric Yield) \u00b7 volume can't buy rank</p>")
+                    "<p>The diagnostic x-ray of the token economy // ranked by \u03a5 (Net Volumetric Yield) // volume can't buy rank</p>")
             gr.HTML('<div id="moses-stat-strip">'
-                    f'<div>operators ranked <span>{len(_ops_now)}</span></div>'
-                    f'<div>MO\u00a7ES leads by <span>{_lead:,.0f}\u00d7</span></div>'
-                    '<div>architecture beats budget</div>'
+                    f'<div>OPERATORS RANKED <span>{len(_ops_now)}</span></div>'
+                    f'<div>MO\u00a7ES LEADS BY <span>{_lead:,.0f}\u00d7</span></div>'
+                    '<div>ARCHITECTURE BEATS BUDGET</div>'
                     '</div>')
+            gr.HTML('<div id="moses-footprint">compute footprint \u00b7 0.5B params (MiniCPM4-0.5B) \u00b7 '
+                    'non-blocking deterministic fallback \u00b7 ZeroGPU \u00b7 \u03a5 = (Cache\u00b7Output)/Input\u00b2</div>')
 
+        # ---- TAB 1: Leaderboard (board + sticky profile inspector) ----
         with gr.Tab("Leaderboard"):
             gr.Markdown("Ranked by **\u03a5 = (Cache\u00b7Output)/Input\u00b2**. Raw Read\u00b7Create\u00b7In\u00b7Out stacked under each operator. $/1M is blended cost \u2014 efficient architecture is also the cheapest.")
-            rank_by = gr.Radio(list(SORT_LABELS.keys()), value="\u03a5 yield",
-                               label="Rank by \u2014 pick a column to see its leaders")
-            lb = gr.HTML(board_html())
-            rank_by.change(resort_board, rank_by, lb)
-            gr.Markdown("*Corpus is curated \u2014 pasting your usage scores you live against the field but doesn't add you to the persisted board unless you're signed in via HuggingFace. $/1M is a list-price recompute (~); real cost shows when you paste your own ccusage. * = structural estimation.*", elem_id="moses-foot")
+            with gr.Row():
+                with gr.Column(scale=7):
+                    rank_by = gr.Radio(list(SORT_LABELS.keys()), value="\u03a5 yield",
+                                       label="Rank by", elem_id="rank-by")
+                    lb = gr.HTML(board_html())
+                    rank_by.change(resort_board, rank_by, lb)
+                    gr.Markdown("*Curated corpus \u00b7 pasting scores you live but isn't persisted unless you sign in \u00b7 $/1M is a list-price recompute (~) \u00b7 \\* = structural estimation.*", elem_id="moses-foot")
+                with gr.Column(scale=5):
+                    gr.Markdown("### Operator profile inspector")
+                    op_pick = gr.Dropdown(_names, label="Select an operator to pull their card",
+                                          value=None, elem_id="op-pick")
+                    op_card = gr.HTML(CARD_PLACEHOLDER)
+                    op_prof = gr.Markdown(elem_id="moses-profile")
+                    op_pick.change(view_operator, op_pick, [op_prof, op_card])
 
-            gr.Markdown("### Operator profiles")
-            op_pick = gr.Dropdown(_names, label="Open an operator's profile", value=None)
-            op_prof = gr.Markdown(elem_id="moses-profile")
-            op_card = gr.HTML()
-            op_pick.change(view_operator, op_pick, [op_prof, op_card])
-
+        # ---- TAB 2: Clock Your Signal (primary importer up top, then ingest + card) ----
         with gr.Tab("Clock Your Signal"):
-            gr.Markdown("""### Clock your signal \u2014 local-first
+            gr.Markdown("### Primary path \u2014 run the local importer")
+            gr.Markdown("Reads your usage on your own machine. **Nothing leaves your computer.** Clone it once, then run:")
+            gr.Code(value="git clone https://github.com/Burnmydays/hf-\ncd hf-\n./sigrank",
+                    language="shell", show_label=False, elem_id="clone-code")
+            with gr.Accordion("More options \u2014 Codex, all providers, or paste instead", open=False):
+                gr.Markdown("""`./sigrank --codex` reads Codex usage \u00b7 `./sigrank --all` runs every provider in turn.
 
-**\u2460 Get the importer, then run it (the real path).** Paste these three lines into your
-terminal \u2014 clone it once, then run it. No install step; it runs on your system Python +
-[Node](https://nodejs.org):
-```
-git clone https://github.com/SunrisesIllNeverSee/moses-sigrank
-cd moses-sigrank
-./sigrank
-```
-`./sigrank --codex` for Codex \u00b7 `./sigrank --all` for both. It reads your usage on your
-machine and prints your profile + \u03a5 + board rank. **Nothing leaves your computer.**
-
-**\u2461 No terminal? Paste instead (the backup).** Run one of these, copy the JSON, drop it
-in the box below:
+**No terminal? Paste instead (the backup).** Run one of these, copy the JSON, drop it in the box below:
 ```
 npx ccusage@latest claude --json
 ```
 ```
 npx ccusage@latest codex --json
 ```
-\u26a0\ufe0f Run Claude and Codex **separately** \u2014 never bare `ccusage --json` (it merges every
-agent and distorts the read). No JSON? Type four numbers: `input output cache_create cache_read`.
+\u26a0\ufe0f Run Claude and Codex **separately** \u2014 never bare `ccusage --json` (it merges every agent and distorts the read). No JSON? Type four numbers: `input output cache_create cache_read`.
 
-**\u2462 Read your profile** \u2014 archetype, cascade, full metrics, and your live board placement
-appear right below.
-
-**\u2463 (optional) Sign in with HuggingFace** to save your entry + session history. Without
-login it's a live snapshot only.
-
-*Codex input is estimated (`*`): alone \u2192 AA 2:1 baseline; with a Claude profile \u2192 your own
-Claude input:output ratio.*""")
-            if _ON_SPACE:
-                gr.LoginButton(elem_id="hf-login-btn")
-            else:
-                gr.Markdown("*HuggingFace login available on the hosted Space \u2014 local mode is transient.*", elem_id="moses-foot")
-            nm = gr.Textbox(label="operator name", placeholder="your handle", max_lines=1)
-            blob = gr.Textbox(label="ccusage JSON (any provider) \u2014or\u2014 four numbers (I O C R)", lines=6,
-                              placeholder='Paste ccusage claude/codex/combined --json output here\n\nor four numbers: input output cache_create cache_read\n\nExample: 1251211 11296121 128196310 2555179769')
-            go = gr.Button("Clock My Signal", variant="primary", elem_id="compute-btn")
-            prof = gr.Markdown(elem_id="moses-profile")
-            prof_bar = gr.HTML()
-            gr.Markdown("### share card")
-            card = gr.HTML()
-            gr.Markdown("*Screenshot to share \u00b7 right-click \u2192 Save image*", elem_id="moses-foot")
-            gr.Markdown("### greatest hits")
-            hits = gr.HTML()
-            gr.Markdown("*Top sessions by \u03a5 \u2014 sign in with HuggingFace to track your history.*", elem_id="moses-foot")
-            gr.Markdown("### your placement")
-            gr.Markdown("*Live placement against the curated field \u2014 sign in to persist your entry.*", elem_id="moses-foot")
-            ob = gr.HTML(board_html())
+*Codex input is estimated (\\*): alone \u2192 AA 2:1 baseline; with a Claude profile \u2192 your own Claude input:output ratio.*""")
+            gr.HTML("<hr style='border:0;border-top:1px solid var(--moses-line);margin:18px 0;'>")
+            with gr.Row():
+                with gr.Column(scale=5):
+                    gr.Markdown("### Ingest a signal")
+                    if _ON_SPACE:
+                        gr.LoginButton(elem_id="hf-login-btn")
+                    else:
+                        gr.Markdown("*HuggingFace login available on the hosted Space \u2014 local mode is transient.*", elem_id="moses-foot")
+                    nm = gr.Textbox(label="operator name / handle", placeholder="your handle", max_lines=1)
+                    blob = gr.Textbox(label="ccusage JSON \u2014or\u2014 four numbers (I O C R)", lines=5,
+                                      placeholder='Paste ccusage JSON here\n\nor four numbers: input output cache_create cache_read\n\nExample: 1251211 11296121 128196310 2555179769')
+                    go = gr.Button("Clock My Signal", variant="primary", elem_id="compute-btn")
+                    gr.Markdown("### Your live board placement")
+                    ob = gr.HTML(board_html())
+                    gr.Markdown("### Greatest hits")
+                    hits = gr.HTML()
+                with gr.Column(scale=6):
+                    gr.Markdown("### Minted operator card")
+                    card = gr.HTML(CARD_PLACEHOLDER)
+                    gr.Markdown("*Right-click \u2192 Save image to share your architectural footprint.*", elem_id="moses-foot")
+                    prof_bar = gr.HTML()
+                    prof = gr.Markdown(elem_id="moses-profile")
             go.click(run_ingest, [blob, nm], [prof, prof_bar, card, hits, ob])
             gr.Examples(
                 examples=[
@@ -424,9 +431,8 @@ Claude input:output ratio.*""")
                 ],
                 inputs=[blob, nm])
 
-        gr.Markdown(elem_id="moses-foot", value="""Four integers in, full ledger out. 
-Architecture is the only variable that matters. 
-Wild-corpus values provisional \u00b7 MO\u00a7ES row verified ccusage \u00b7 * = structural estimation \u00b7 [How it works \u2197](#)""")
+        gr.Markdown(elem_id="moses-foot", value="""Four integers in, full ledger out. Architecture is the only variable that matters.
+Wild corpus: tokscale.ai footprints \u00b7 MO\u00a7ES row verified ccusage \u00b7 * = structural estimation.""")
     return _b
 
 demo = _build_demo()

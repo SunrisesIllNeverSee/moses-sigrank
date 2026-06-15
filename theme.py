@@ -200,6 +200,32 @@ button.primary:hover, #compute-btn:hover { background: #d8a449 !important; }
 /* HF login button styling */
 #hf-login-btn { margin-bottom: 8px; }
 
+/* footprint flex line under the hero (Build Small badge) */
+#moses-footprint { margin-top: 8px; font-size: 10px; color: var(--moses-dim);
+  letter-spacing: 0.05em; opacity: 0.85; }
+
+/* "Rank by" radio -> horizontal pill / segmented control (not a gray form) */
+#rank-by { border: none !important; background: transparent !important; padding: 0 !important; }
+#rank-by .wrap { display: flex !important; flex-wrap: wrap; gap: 6px; }
+#rank-by .wrap label {
+  background: var(--moses-card); border: 1px solid var(--moses-line);
+  border-radius: 16px; padding: 4px 12px; color: var(--moses-dim);
+  font-size: 11px; cursor: pointer; margin: 0 !important; }
+#rank-by .wrap label.selected, #rank-by .wrap label:has(input:checked) {
+  border-color: var(--moses-gold) !important; color: var(--moses-gold) !important;
+  background: rgba(196,146,58,0.12) !important; }
+#rank-by input[type="radio"] { display: none !important; }
+
+/* primary-path clone code block — match the dark terminal */
+#clone-code, #clone-code * { background: var(--moses-bg) !important; color: var(--moses-ink) !important; }
+#clone-code { border: 1px solid var(--moses-line) !important; border-radius: 8px !important; }
+
+/* operator picker dropdown */
+#op-pick input { background: var(--moses-bg) !important; color: var(--moses-ink) !important; }
+
+/* ghost / unminted placeholder card */
+#ghost-card { opacity: 0.45; border-style: dashed !important; }
+
 footer { display: none !important; }
 
 @media (max-width: 700px) {
