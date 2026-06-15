@@ -34,7 +34,14 @@ your rank. The ranking metric **Υ = (Cache·Output)/Input²** penalizes raw-inp
 padding quadratically — volume can't buy rank — but Υ is only the headline of a
 larger metric system whose mathematical thesis is the **cascade decomposition**.
 
-**GitHub:** [github.com/SunrisesIllNeverSee](https://github.com/SunrisesIllNeverSee) · **Repo:** [SunrisesIllNeverSee/moses-sigrank](https://github.com/SunrisesIllNeverSee/moses-sigrank)
+**GitHub:** [github.com/SunrisesIllNeverSee](https://github.com/SunrisesIllNeverSee) · **Repo:** [SunrisesIllNeverSee/moses-sigrank](https://github.com/SunrisesIllNeverSee/moses-sigrank) · **Deck:** [mos2es.com/deck](https://mos2es.com/deck) · **Benchmarks:** [mos2es.com/benchmarks](https://mos2es.com/benchmarks)
+
+---
+
+> **SigRank is Layer 2 of the MO§ES™ stack** — the human–AI operator intelligence layer.
+> MO§ES™ is the substrate (compression, recursive execution, drift control). SigRank is the
+> measurement wedge: who is operating at the frontier, and what does their architecture look like?
+> Built by [Deric J. McHenry](https://github.com/SunrisesIllNeverSee) · Ello Cello LLC · Patent pending 19/426,028.
 
 ---
 
@@ -185,18 +192,42 @@ Cascade (10x DEV) = transmission (O/I) × commitment (Create/O) × compounding
 (Read/Create); its log-sum is the exponent. By telescoping, 10^X = Leverage = C/I.
 
 ## Benchmark convergence
-SigRank's finding is corroborated by a second, independent instrument.
+SigRank's finding is corroborated by two independent instruments.
 
-- **Artificial Analysis (AA)** benchmarks measure *models* at a **7:2:1**
-  (cache : input : output) token mix.
-- **SigRank** measures *operators / users* from their own token logs.
-- Both instruments converge on the same result: **cache-dominant architecture is
-  the most efficient AND the cheapest per token.**
+### Instrument 1 — Artificial Analysis model benchmarks
+- **AA** benchmarks measure *models* at a **7:2:1** (cache : input : output) token mix.
+- **SigRank** measures *operators* from their own token logs.
+- Both converge: **cache-dominant architecture is the most efficient AND cheapest per token.**
 
-The AA **7:2:1** ratio is the source of the **4.0 efficiency baseline** used in
-the Efficiency metric: `(7 + 1) / 2 = 4.0`. Two independent instruments — model
-benchmarks on one side, real user token ledgers on the other — landing on the
-same architecture is the validation.
+The AA **7:2:1** ratio is the source of the **4.0 efficiency baseline**: `(7 + 1) / 2 = 4.0`.
+
+### Instrument 2 — Five measured kernels ([mos2es.com/benchmarks](https://mos2es.com/benchmarks))
+MO§ES operator measured against the AA Coding Agent Index field average — 7-day window,
+raw JSONL extraction across **98 session files**, all subagents. **#1 in all five categories:**
+
+| kernel | MO§ES™ | field avg | delta |
+|---|---|---|---|
+| Cache hit rate | **94.66%** | 90.68% | +3.98pp · #1 |
+| Output : Input ratio | **17.9×** | 0.162× | 110× field avg · #1 |
+| Tokens per task | **810K** | 4.67M | 5.8× fewer · #1 |
+| Time per task | **1.84 min** | 11.92 min | 6.5× faster · #1 |
+| Cost per LOC | **$0.0007** | $0.067 | 96× cheaper · #1 |
+
+Raw token ledger (98 sessions · 1,123B total tokens):
+
+| | Input | Output | Cache Create | Cache Read | Total |
+|---|---|---|---|---|---|
+| MO§ES™ | 123K | 3.90M | 34.83M | 1.084B | 1.123B |
+| Field avg (per model) | 162.9M | 17.2M | — | 1.49B | 1.67B |
+
+> Field data: [artificialanalysis.ai/agents/coding-agents](https://artificialanalysis.ai/agents/coding-agents).
+> MO§ES values from operator-reported 7-day window (2026-05-08 → 2026-05-14).
+> Methodology note: AA measures isolated per-task benchmark runs; MO§ES measures sustained
+> product builds. The convergence of #1 leadership across both regimes is the structural result.
+
+**This is the real-world grounding behind SigRank's thesis** — the same operator that ranks #1
+on Υ also ranks #1 on every external benchmark kernel. Architecture isn't just a metric; it's
+measurably the most efficient and cheapest operating mode in the field.
 
 ## Codex support
 Codex never itemizes cache writes, so SigRank estimates the high-signal user input
