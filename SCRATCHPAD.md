@@ -40,6 +40,23 @@ cd /Users/dericmchenry/Desktop/moses-sigrank
 
 ## WORK LOG (newest first)
 
+### Devin session — 2026-06-15 (rarity system)
+- [done] `rarity_class(m)` function added after `classify()` — maps velocity/leverage axes to
+  four tiers: MYTHIC (v≥1, l≥100), EPIC (l≥10, v<1), RARE (v≥0.5), COMMON (fallback).
+  Each tier returns (key, label, passive ability name, effect flavor text).
+- [done] `card_html()` updated — outer `.sig-card` div gets `rarity-{key}` class, new
+  `.sig-card-rarity` badge (COMMON/RARE/EPIC/MYTHIC), `.sig-card-passive` + `.sig-card-effect`
+  blocks inserted between archetype and yield. All existing elements preserved.
+- [done] `board_html()` updated — each row gets `rarity-{key}` class for colored left-border.
+- [done] `theme.py` CSS — rarity color variables (`--rarity-common/rare/epic/mythic`), board
+  row `.mb-row.rarity-*` left-borders, `.sig-card` hardcoded gold border removed (now per-rarity
+  border + box-shadow), `.sig-card-rarity` badge styles, `.sig-card-passive`/`.sig-card-effect`
+  text styles, `.sig-card-name` color changed to `--moses-ink` (rarity border carries signal),
+  MYTHIC override for yield/name color to gold.
+- [done] Verify green: `py_compile` all *.py OK · `metrics.py` canonical (Y 18436.98, lev 2042.2,
+  10xDEV 3.31, $/1M 0.527) · rarity assignments: MO§ES→MYTHIC, MapleEve/vincentkoc→EPIC,
+  cexll/iamtheavoc1→RARE, Nepomuk5665/kzquandary→COMMON.
+
 ### Devin session — 2026-06-15 (visual upgrade)
 - [done] theme.py CSS upgrade — brighter default bar gradient (0.28→0.72), `.mb-row.rank1`
   gold left-border + dominant #1 row, colored rank numbers (`.mb-rank-1/2/3`), hero upgrade
