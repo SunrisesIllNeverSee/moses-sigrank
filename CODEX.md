@@ -22,16 +22,35 @@ Done and pushed to Burnmydays/hf- (main):
 - Instructions sharpened (app.py "Clock Your Signal" tab + README).
 - Wild corpus = 10 tokscale.ai operators; board = 11 rows; Supabase migrated + synced.
 
-## Tasks for Codex (each = one attributed commit)
-> The Codex parser is FINAL by design: the ratio model (Alpha 2:1 / Beta Claude-ratio)
-> handles the estimate — do NOT add turn/daily-delta logic. Tasks below build around it.
-1. **`test_metrics.py`** — pytest that locks the canonical numbers and identities:
-   - MO§ES Υ = 18,436.98, leverage = 2042.2, 10x DEV = 3.31.
-   - Telescoping identity `(o/i)·(cw/o)·(cr/cw) == cr/i` for every SEED operator with cache.
-   - Both Codex pathways: Alpha `output×2`, Beta `output×io_ratio`.
-2. **Real Codex `$/1M`** — wire OpenAI per-1M prices into `parse_codex_submission` meta so
-   Codex rows can show real (not list-estimate) cost. Keep the `*` estimated flag on input.
-3. **Upload the repo to `github.com/SunrisesIllNeverSee`** (the prize-submission location).
+## Codex parser — DONE (do not change)
+The Codex token conversion is FINAL: the ratio model in `_codex_input_estimate`
+(`ingest.py`) — Alpha `output×2` (no Claude profile) / Beta `output×io_ratio` (Claude
+profile present) — handles the estimate. **Do NOT add turn/daily-delta logic.**
+
+## Codex's job: DEPLOY (the main handoff)
+Do these in order so the work + attribution land in the submitted location.
+
+1. **Upload the repo to GitHub → `github.com/SunrisesIllNeverSee`.**
+   The current working copy is at `/Users/dericmchenry/Desktop/moses-sigrank` (also on
+   `github.com/Burnmydays/hf-`). Commit with Codex attribution and push to SunrisesIllNeverSee.
+
+2. **Deploy to the HuggingFace Space** (Gradio SDK; `README.md` already has valid Space
+   front-matter). Create/link the Space under the owner's HF account (`burnmydays`) and
+   push the repo to the Space's git remote.
+
+3. **Set the Space secrets** (Space → Settings → Variables and secrets). Copy the values
+   from `SECRETS.local.md` (gitignored — never commit them):
+   - `SUPABASE_URL`        → read endpoint
+   - `SUPABASE_ANON_KEY`   → read (RLS-gated, public-read)
+   - `SUPABASE_SERVICE_KEY`→ **only if** signed-in visitor rows should persist; leave UNSET
+     for the curated demo (then writes are no-ops and pastes stay transient).
+   Without these the app still boots on the SEED fallback (11 rows), so it never breaks.
+
+## Optional extra attributed commits (nice-to-have for the prize)
+- **`test_metrics.py`** — lock MO§ES Υ 18,436.98 / lev 2042.2 / 10x DEV 3.31 + the
+  telescoping identity `(o/i)·(cw/o)·(cr/cw)==cr/i` for every SEED row, plus both Codex
+  pathways (Alpha `output×2`, Beta `output×io_ratio`).
+- **Real Codex `$/1M`** — OpenAI per-1M prices in `parse_codex_submission` meta (keep `*`).
 
 ## Verify BEFORE every Codex commit
 ```
