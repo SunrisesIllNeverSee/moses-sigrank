@@ -247,7 +247,7 @@ For Claude Code, ccusage supplies real cost → exact $/1M. For manual/wild rows
 [Watch the demo on Loom →](https://www.loom.com/share/edc345e2e5164e20aed3acb6436a08c3)
 
 ## Social post
-[View on X →](https://x.com/burnmydays/status/2066665783812391179?s=20)
+[View on X →](https://x.com/burnmydays/status/2066666214143758576?s=20)
 
 ## Notes
 
