@@ -342,10 +342,7 @@ CARD_PLACEHOLDER = (
 
 def _build_demo():
     _blocks_kw = {"title": "MO\u00a7ES SigRank"}
-    try:
-        _b = gr.Blocks(css=CSS, theme=gr.themes.Base(), **_blocks_kw)
-    except TypeError:
-        _b = gr.Blocks(**_blocks_kw)
+    _b = gr.Blocks(**_blocks_kw)
     # dynamic hero stats (don't hardcode counts that drift when the corpus changes)
     _ops_now = operators()
     _names = list(_ops_now.keys())
@@ -438,7 +435,4 @@ Wild corpus: tokscale.ai footprints \u00b7 MO\u00a7ES row verified ccusage \u00b
 demo = _build_demo()
 
 if __name__ == "__main__":
-    try:
-        demo.launch(css=CSS, theme=gr.themes.Base())
-    except TypeError:
-        demo.launch()
+    demo.launch(css=CSS, theme=gr.themes.Base())
