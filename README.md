@@ -9,7 +9,7 @@ app_file: app.py
 hf_oauth: true
 pinned: false
 license: mit
-short_description: Rank AI coding operators by architecture, not budget. Υ = (Cache·Output)/Input²
+short_description: Rank AI operators by architecture. Volume can't buy rank.
 models:
   - openbmb/MiniCPM4-0.5B
 tags:
