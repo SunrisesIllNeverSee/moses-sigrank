@@ -8,6 +8,10 @@ CSS = """
   --moses-line: #3A3324;
   --moses-ink: #E8E0CF;
   --moses-dim: #8a7f68;
+  --rarity-common: #6b7280;
+  --rarity-rare: #3b82f6;
+  --rarity-epic: #8b5cf6;
+  --rarity-mythic: #C4923A;
 }
 .gradio-container, .gradio-container * { font-family: ui-monospace, "SF Mono", Menlo, monospace !important; }
 .gradio-container { background: var(--moses-bg) !important; max-width: 1100px !important; margin: 0 auto !important; }
@@ -84,6 +88,10 @@ button.primary:hover, #compute-btn:hover { background: #d8a449 !important; }
   color: var(--moses-ink) !important;
 }
 .mb-row.rank1 .mb-yval { color: var(--moses-gold); font-size: 14px; }
+.mb-row.rarity-common  { border-left: 3px solid var(--rarity-common); }
+.mb-row.rarity-rare    { border-left: 3px solid var(--rarity-rare); }
+.mb-row.rarity-epic    { border-left: 3px solid var(--rarity-epic); }
+.mb-row.rarity-mythic  { border-left: 3px solid var(--rarity-mythic); }
 .mb-rank-1 { color: var(--moses-gold); font-weight: 700; }
 .mb-rank-2 { color: #a0a0a0; }
 .mb-rank-3 { color: #8a6a3a; }
@@ -108,18 +116,20 @@ button.primary:hover, #compute-btn:hover { background: #d8a449 !important; }
 .sig-card {
   width: 380px; min-height: 500px;
   background: linear-gradient(160deg, #1E1B15 60%, #2a2318);
-  border: 1px solid var(--moses-gold);
   border-radius: 12px;
   padding: 28px 24px 20px;
   font-family: ui-monospace, monospace;
   position: relative;
-  box-shadow: 0 0 40px rgba(196,146,58,0.12), inset 0 1px 0 rgba(196,146,58,0.2);
 }
+.sig-card.rarity-common  { border: 1px solid var(--rarity-common); box-shadow: 0 0 20px rgba(107,114,128,0.12); }
+.sig-card.rarity-rare    { border: 1px solid var(--rarity-rare);   box-shadow: 0 0 24px rgba(59,130,246,0.15); }
+.sig-card.rarity-epic    { border: 1px solid var(--rarity-epic);   box-shadow: 0 0 28px rgba(139,92,246,0.18); }
+.sig-card.rarity-mythic  { border: 1px solid var(--rarity-mythic); box-shadow: 0 0 40px rgba(196,146,58,0.22), inset 0 1px 0 rgba(196,146,58,0.15); }
 .sig-card-watermark {
   position: absolute; top: 14px; right: 16px;
   font-size: 9px; color: var(--moses-dim); letter-spacing: 0.1em;
 }
-.sig-card-name { color: var(--moses-gold); font-size: 22px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 4px; }
+.sig-card-name { color: var(--moses-ink); font-size: 22px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 4px; }
 .sig-card-archetype {
   display: inline-block; font-size: 10px; letter-spacing: 0.08em;
   border: 1px solid var(--moses-gold); color: var(--moses-gold);
@@ -145,6 +155,15 @@ button.primary:hover, #compute-btn:hover { background: #d8a449 !important; }
   padding: 8px 12px; margin-top: 16px; line-height: 1.5;
   font-style: italic;
 }
+.sig-card-rarity { display: inline-block; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; padding: 2px 8px; border-radius: 2px; margin-bottom: 8px; }
+.sig-card-rarity.rarity-common  { color: var(--rarity-common); border: 1px solid var(--rarity-common); }
+.sig-card-rarity.rarity-rare    { color: var(--rarity-rare);   border: 1px solid var(--rarity-rare); }
+.sig-card-rarity.rarity-epic    { color: var(--rarity-epic);   border: 1px solid var(--rarity-epic); }
+.sig-card-rarity.rarity-mythic  { color: var(--rarity-mythic); border: 1px solid var(--rarity-mythic); }
+.sig-card-passive { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--moses-dim); margin: 12px 0 4px; }
+.sig-card-effect  { font-size: 10px; color: var(--moses-dim); font-style: italic; border-left: 2px solid #3A3324; padding: 6px 10px; margin-bottom: 14px; line-height: 1.5; }
+.sig-card.rarity-mythic .sig-card-yield { color: var(--rarity-mythic); }
+.sig-card.rarity-mythic .sig-card-name  { color: var(--rarity-mythic); }
 .sig-card-footer {
   position: absolute; bottom: 16px; left: 24px; right: 24px;
   font-size: 9px; color: #5f573f; letter-spacing: 0.06em;
