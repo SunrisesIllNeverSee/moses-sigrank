@@ -1,4 +1,5 @@
 gradio[oauth]>=4.44.0
+huggingface_hub<1.0
 spaces
 requests
 torch
