@@ -327,25 +327,34 @@ def _build_demo():
             gr.HTML(board_html())
 
         with gr.Tab("Clock Your Signal"):
-            gr.Markdown("""**Get your operator profile \u2014 every provider, one command.**
+            gr.Markdown("""**Get your operator profile \u2014 measure each provider separately.**
 
-**\u2460 Run ccusage** (reads your local usage \u2014 one command per provider):
+**\u2460 Get your numbers.** Run one command per provider in your terminal:
 ```
-ccusage claude --json       # Claude Code stats
-ccusage codex --json        # Codex stats (estimated *)
-ccusage --json              # ALL providers combined
+ccusage claude --json       # Claude Code
+ccusage codex --json        # Codex (estimated *)
 ```
-Or use the local importer:
+\u26a0\ufe0f **Run each provider on its own \u2014 never bare `ccusage --json`.** With no
+subcommand it merges every agent into one total, inflating input and distorting your
+architecture. Claude and Codex are different operators \u2014 measure them separately.
+
+Prefer zero copy-paste? Use the local importer (reads your usage on your machine):
 ```
-./sigrank                   # Claude Code (measured)
-./sigrank --codex           # Codex (applies field anchor *)
+./sigrank            # Claude Code (measured)
+./sigrank --codex    # Codex (calibrated *)
+./sigrank --all      # each provider, one after another
 ```
 
-**\u2461 Paste the JSON below.** Drop your `ccusage` output \u2014 Claude, Codex, or combined \u2014 and we'll route it automatically. Or paste four numbers: `input output cache_create cache_read`.
+**\u2461 Paste it below.** Drop one provider's `ccusage` JSON in the box \u2014 we route it
+automatically. No JSON handy? Type four numbers in order:
+`input  output  cache_create  cache_read`.
 
-*Codex / non-Claude providers: input is calibrated via the 3:2:1 field anchor (or 1:9 if you have a Claude profile). Estimated rows are flagged with \\*.*
+*Codex reports no fresh-vs-cache input split, so its input is **estimated**: on its own it
+uses the AA-backed **2:1** baseline; if you also have a Claude profile it uses **your own
+Claude input:output ratio**. Estimated rows are flagged with \\*.*
 
-**\u2462 Sign in to save.** HuggingFace users get one persistent board entry + session history. Paste without login = snapshot only.""")
+**\u2462 Sign in to save.** A HuggingFace login earns one persistent board entry + session
+history (Greatest Hits). Pasting without login is a live snapshot only.""")
             if _ON_SPACE:
                 gr.LoginButton(elem_id="hf-login-btn")
             else:

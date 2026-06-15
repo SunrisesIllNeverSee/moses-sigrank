@@ -47,11 +47,44 @@ is the token-domain expression of the same conservation law.
 - *[Word-based operator ranking — link placeholder]*
 
 ## What it does
-Paste `npx ccusage@latest --json` (Claude Code), `ccusage codex --json` (Codex),
+Paste `ccusage claude --json` (Claude Code), `ccusage codex --json` (Codex),
 or four numbers →
 - **operator profile** — a 0.5B MiniCPM model narrates your architecture, plus
   raw ledger, composition, full metrics, cascade breakdown
 - **leaderboard placement** vs real operators, ranked by Υ, with blended **$/1M cost**
+
+## How to measure yourself
+Three things: **what data, where to get it, where to put it.**
+
+**1 — What / where to get it.** SigRank needs four integers — `input`, `output`,
+`cache_create`, `cache_read`. [`ccusage`](https://github.com/ryoppippi/ccusage) reads
+them from your local logs. Run **one command per provider** — Claude and Codex are
+different operators, so measure them **separately**:
+
+```
+ccusage claude --json       # Claude Code
+ccusage codex --json        # Codex
+```
+
+> ⚠️ Don't use bare `ccusage --json` (no subcommand): it merges every agent into one
+> total, which inflates input and distorts the architecture read.
+
+**2 — Where to put it.** Either:
+
+- **Local importer (no paste):** `./sigrank` (Claude), `./sigrank --codex` (Codex),
+  or `./sigrank --all` (each provider in turn). Reads your usage on your machine and
+  prints your profile + board rank. Nothing leaves your computer.
+- **Hosted Space:** paste one provider's JSON into the **Clock Your Signal** box, or type
+  the four numbers `input output cache_create cache_read`.
+
+**3 — Saving (optional).** On the Space, sign in with HuggingFace to earn one persistent
+board entry + session history (Greatest Hits). Without login, your read is a live
+snapshot only — scored against the field but not saved.
+
+**Codex note.** Codex doesn't report a fresh-vs-cache input split, so its input is
+*estimated*: on its own it uses the AA-backed **2:1** baseline; if you also have a Claude
+profile (e.g. `./sigrank --codex`, which reads your Claude ratio first) it calibrates with
+**your own Claude input:output ratio**. Estimated rows are flagged with `*`.
 
 ## The model (Tiny Titan / MiniCPM)
 `openbmb/MiniCPM4-0.5B` (0.5B params, well under the 4B cap) runs on ZeroGPU and
@@ -152,11 +185,17 @@ benchmarks on one side, real user token ledgers on the other — landing on the
 same architecture is the validation.
 
 ## Codex support
-Codex reports a *combined* input figure (fresh + cached) and never itemizes cache
-writes. SigRank splits it with the measured field anchor **input:output ≈ 2:1**
-(estimated fresh input = 2×output; remainder → cache_create, clamped ≥0). Every
-Codex-derived row is flagged with its directional caveat (↑ input-heavy /
-↓ output-rich). The anchor is provisional and being refined (see CODEX.md).
+Codex never itemizes cache writes, so SigRank estimates the high-signal user input
+from output via two pathways (`_codex_input_estimate` in `ingest.py`):
+
+- **Alpha — Codex alone:** the AA-backed **2:1** baseline — `est_input = 2 × output`.
+- **Beta — Codex + a Claude profile:** the operator's **own** measured Claude
+  `input:output` ratio — `est_input = output × (claude_input / claude_output)`. The
+  CLI builds this automatically (`./sigrank --codex` reads your Claude usage first).
+
+`cache_create` is the remainder (`raw_input − est_input`, clamped ≥0); `cache_read` is
+measured directly. Every Codex-derived row is **flagged with `*`** and names the exact
+pathway used in its caveat.
 
 ## Cost
 For Claude Code, ccusage supplies real cost → exact $/1M. For manual/wild rows

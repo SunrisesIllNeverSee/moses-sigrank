@@ -182,18 +182,37 @@ def _extract_codex_totals(d):
     return tot
 
 
+def _codex_input_estimate(raw_out, operator_profile):
+    """Estimate Codex high-signal user input from output. Single source of truth
+    for both the JSON and named-field Codex paths (no duplicated magic numbers).
+
+    Codex never reports a fresh-vs-cache input split, so we estimate the
+    high-signal user input from the output (the real work product) via a ratio:
+
+      Beta  (Codex + Claude present): use the operator's REAL Claude operating
+        ratio io_ratio = claude_input/claude_output ->  est_input = output * io_ratio
+        (dynamic, never a constant — it's the operator's own measured behaviour).
+
+      Alpha (Codex alone, no Claude):  AA-backed 2:1 baseline (input:output = 2),
+        supported by the wild corpus ->  est_input = output * 2.0
+
+    Returns (est_input:int, parsing_mode:str).
+    """
+    if (operator_profile and operator_profile.get("model_type") == "claude"
+            and operator_profile.get("io_ratio")):
+        ratio = operator_profile["io_ratio"]            # claude input / output
+        return int(raw_out * ratio), f"Claude operating-ratio {ratio:.3f}:1 (input:output)"
+    return int(raw_out * 2.0), "AA 2:1 baseline (wild-corpus backed)"
+
+
 def parse_codex_submission(payload, operator_profile=None):
     """
     Parses Codex token payloads to estimate true high-signal user input.
 
-    Two pathways depending on operator telemetry:
+    Two pathways depending on operator telemetry (see _codex_input_estimate):
 
-    Pathway Alpha (Standard): No Claude footprint -> 3:2:1 baseline.
-      estimated_user_input = outputTokens * 2.0
-
-    Pathway Beta (Claude Engine): Operator has verified Claude profile ->
-      dynamic 1:9 transmission velocity extraction.
-      estimated_user_input = outputTokens / 9.0
+    Pathway Beta (Codex + Claude): est_input = output * (claude_input/claude_output)
+    Pathway Alpha (Codex alone):   est_input = output * 2.0   (AA 2:1 baseline)
 
     Returns (i, o, cw, cr, meta) mapped to the four pillars:
       i  = calibrated_user_input (high-signal core)
@@ -209,16 +228,8 @@ def parse_codex_submission(payload, operator_profile=None):
     raw_cache = tot["cached"]
     cost      = tot["cost"] if tot["cost"] > 0 else None
 
-    # Pathway Beta: Dynamic User Profile Match (Claude Engine)
-    if operator_profile and operator_profile.get("model_type") == "claude":
-        estimated_user_input = raw_out / 9.0
-        parsing_mode = "Claude Closed-Loop Calibration (1:9)"
-    # Pathway Alpha: Fallback Standard (The Top 10 Wild Field Baseline)
-    else:
-        estimated_user_input = raw_out * 2.0
-        parsing_mode = "Standard Open-Loop Baseline (3:2:1)"
-
-    context_debt = max(0, raw_in - int(estimated_user_input))
+    estimated_user_input, parsing_mode = _codex_input_estimate(raw_out, operator_profile)
+    context_debt = max(0, raw_in - estimated_user_input)
 
     meta = {
         "source": "codex",
@@ -240,10 +251,10 @@ def ingest_meta(text, operator_profile=None):
       - Text with named fields (extracts by field name, not position)
       - Four bare numbers: input output cache_create cache_read
 
-    operator_profile: optional dict with at least {"model_type": "claude"}
+    operator_profile: optional dict {"model_type": "claude", "io_ratio": float}
     when the submitting user has a verified Claude session profile. This
-    switches the Codex parser from the 3:2:1 baseline to the 1:9 closed-loop
-    calibration pathway.
+    switches the Codex parser from the Alpha 2:1 baseline to the Beta pathway
+    that uses the operator's own Claude input/output ratio.
     """
     text=text.strip()
     if not text: raise ValueError("empty")
@@ -284,13 +295,8 @@ def ingest_meta(text, operator_profile=None):
                         raw_in = int(float(m.group(1).replace(",", "")))
                         break
                 raw_out = o  # already includes reasoning from _extract_by_name
-                if operator_profile and operator_profile.get("model_type") == "claude":
-                    est_input = raw_out / 9.0
-                    parsing_mode = "Claude Closed-Loop Calibration (1:9)"
-                else:
-                    est_input = raw_out * 2.0
-                    parsing_mode = "Standard Open-Loop Baseline (3:2:1)"
-                context_debt = max(0, raw_in - int(est_input))
+                est_input, parsing_mode = _codex_input_estimate(raw_out, operator_profile)
+                context_debt = max(0, raw_in - est_input)
                 meta = {
                     "source": "codex", "estimated": True,
                     "parsing_mode": parsing_mode,

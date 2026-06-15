@@ -6,8 +6,9 @@ Her-style: reads YOUR usage on YOUR machine and prints your operator read. No
 paste, no token, no upload. The hosted Space's paste box is the backup; this is
 the real-app path.
 
-  python sigrank.py                 # auto-run `ccusage --json` (Claude Code)
+  python sigrank.py                 # auto-run `ccusage claude --json` (Claude Code)
   python sigrank.py --codex         # auto-run `ccusage codex --json`
+  python sigrank.py --all           # every provider in turn (claude, then codex)
   python sigrank.py --file u.json   # read a saved ccusage/codex json
   python sigrank.py --name "you"    # label your row
   cat u.json | python sigrank.py -  # read from stdin (backup)
@@ -137,6 +138,8 @@ def main(argv=None):
     p.add_argument("stdin_dash", nargs="?", default=None, help="pass '-' to read JSON from stdin")
     p.add_argument("--file", help="read a saved ccusage/codex json file")
     p.add_argument("--codex", action="store_true", help="run `ccusage codex --json`")
+    p.add_argument("--all", action="store_true",
+                   help="run every provider in turn (claude, then codex)")
     p.add_argument("--name", default="you", help="label for your row")
     p.add_argument("--no-color", action="store_true", help="plain output")
     args = p.parse_args(argv)
@@ -144,7 +147,34 @@ def main(argv=None):
 
     color = sys.stdout.isatty() and not args.no_color
 
-    # For Codex: detect Claude profile so the parser uses 1:9 pathway.
+    # --all: run each provider sequentially and independently. Claude runs first;
+    # its measured input/output ratio is captured and handed to the Codex pass so
+    # Codex uses the Beta (operator-ratio) pathway. One provider failing (e.g. no
+    # Codex usage) never stops the others.
+    if args.all:
+        name = (args.name or "you").strip()[:24] or "you"
+        claude_profile = None
+        for provider, is_codex in (("claude", False), ("codex", True)):
+            try:
+                prov_args = type("a", (), {"file": None, "stdin": False, "codex": is_codex})()
+                raw, how = _grab_usage(prov_args)
+                prof = claude_profile if is_codex else None
+                i, o, cw, cr, meta = ingest_meta(raw, operator_profile=prof)
+                if i + o + cw + cr == 0:
+                    print(f"  [{provider}] no usage data — skipped")
+                    continue
+                m = compute(i, o, cw, cr, cost_usd=meta.get("cost"))
+                if meta.get("estimated"):
+                    m["_caveat"] = meta.get("caveat")
+                print(render(name, m, how, color))
+                if not is_codex and o > 0:        # capture Claude ratio for the Codex pass
+                    claude_profile = {"model_type": "claude", "io_ratio": i / o}
+            except Exception as e:
+                print(f"  [{provider}] skipped: {e}")
+        return 0
+
+    # For Codex: detect the operator's real Claude I/O ratio so the parser uses
+    # the Beta pathway (output * claude_input/claude_output) instead of Alpha 2:1.
     operator_profile = None
     if args.codex:
         try:
@@ -154,7 +184,7 @@ def main(argv=None):
             if _co > 0:
                 operator_profile = {"model_type": "claude", "io_ratio": _ci / _co}
         except Exception:
-            pass  # no Claude data — Alpha pathway (3:2:1)
+            pass  # no Claude data — Alpha pathway (AA 2:1 baseline)
 
     try:
         raw, how = _grab_usage(args)
