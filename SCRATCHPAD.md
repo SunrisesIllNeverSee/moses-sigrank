@@ -67,6 +67,13 @@ cd /Users/dericmchenry/Desktop/moses-sigrank
   ```
   Until those are set, the app runs on the hardcoded SEED fallback (still works).
 
+## AUTO-INGEST — sigrank.py (her-style local importer, this session)
+- `sigrank.py` = local-first CLI. Auto-runs `ccusage --json` (or `--codex`/`--file`/stdin),
+  computes via metrics.py, prints a sleek read + live board rank (db.load_operators → SEED fallback).
+- No paste, no token, 100% local. The hosted Space paste box stays as the backup.
+- `--push` is NOT yet implemented (would need service key); local read+compute only for now.
+- Verified: compile OK; file/stdin/4-number paths produce correct profile (MO§ES Υ 18,437).
+
 ## BLOCKED ON OWNER (not code)
 - FIX 3 — tokscale "MCH (tokscale read)" comparison row: needs a clean re-pull;
   do NOT freeze the screenshot figure. Add as a LABELED instrument-comparison row.
