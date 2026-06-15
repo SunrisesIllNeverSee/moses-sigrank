@@ -244,7 +244,7 @@ Every Codex-derived row is **flagged with `*`** and names the exact pathway used
 For Claude Code, ccusage supplies real cost → exact $/1M. For manual/wild rows, $/1M is a list-price estimate (shown with `~`). Either way: the cache-dominant operator at the top is also the cheapest per token, by an order of magnitude.
 
 ## Demo video
-<!-- paste YouTube/HF link here -->
+[Watch the demo on Loom →](https://www.loom.com/share/edc345e2e5164e20aed3acb6436a08c3)
 
 ## Social post
 <!-- paste X/LinkedIn link here -->
