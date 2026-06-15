@@ -17,6 +17,13 @@ tags:
   - tiny-titan
   - best-demo
   - minicpm
+  - track:wood
+  - sponsor:openbmb
+  - sponsor:openai
+  - achievement:offgrid
+  - achievement:offbrand
+  - achievement:sharing
+  - achievement:fieldnotes
 ---
 
 # MO§ES™ SigRank — the diagnostic x-ray of the token economy
@@ -26,6 +33,10 @@ Paste your token usage; get an operator profile with a tiny-model narration and
 your rank. The ranking metric **Υ = (Cache·Output)/Input²** penalizes raw-input
 padding quadratically — volume can't buy rank — but Υ is only the headline of a
 larger metric system whose mathematical thesis is the **cascade decomposition**.
+
+**GitHub:** [github.com/SunrisesIllNeverSee](https://github.com/SunrisesIllNeverSee) · **Repo:** [SunrisesIllNeverSee/moses-sigrank](https://github.com/SunrisesIllNeverSee/moses-sigrank)
+
+---
 
 ## Origin
 SigRank grew out of an earlier attempt to rank AI coding operators by *words* —
@@ -39,20 +50,13 @@ translated directly: commitment → `cache_create/output`, reuse → `cache_read
 transmission → `output/input`. The cascade identity `(O/I)×(C_w/O)×(C_r/C_w) = C_r/I`
 is the token-domain expression of the same conservation law.
 
-*[Full theoretical lineage — placeholder for extended write-up]*
-
-### Academic work & references
-<!-- TODO: add links to the word-based ranking / conservation-law write-up,
-     any preprints, talks, or external references here. -->
-- *[Conservation law of commitment — link placeholder]*
-- *[Word-based operator ranking — link placeholder]*
-
 ## What it does
 Paste `ccusage claude --json` (Claude Code), `ccusage codex --json` (Codex),
 or four numbers →
 - **operator profile** — a 0.5B MiniCPM model narrates your architecture, plus
   raw ledger, composition, full metrics, cascade breakdown
 - **leaderboard placement** vs real operators, ranked by Υ, with blended **$/1M cost**
+- **trading card** — species classification, cascade decomposition, composition bar
 
 ## How to measure yourself
 SigRank is **local-first** — the importer reads your usage on your own machine.
@@ -66,8 +70,9 @@ cd moses-sigrank
 ./sigrank
 ```
 
-`./sigrank --codex` for Codex, `./sigrank --all` for both. It runs `ccusage` for you,
-computes your profile + Υ, and prints your board rank. **Nothing leaves your machine.**
+`./sigrank --codex` for Codex · `./sigrank --all` for both providers in one pass.
+It runs `ccusage` for you, computes your profile + Υ, and prints your board rank.
+**Nothing leaves your machine.**
 
 **2 — Backup: paste on the Space.** No repo? Run `ccusage` yourself and paste the JSON
 into the **Clock Your Signal** box. Run **one command per provider** (Claude and Codex are
@@ -120,23 +125,23 @@ transmission commitment  compounding   leverage
 telescoping, `10^(10x DEV) = leverage = C_r/I`. The cascade tells you which stage
 an operator is winning or losing on, not just the bottom line.
 
-### Operator archetypes (`classify()` in `app.py`)
-Velocity (`O/I`) and leverage (`C_r/I`) place each operator in a behavioral class:
+### Operator species (`classify()` in `app.py`)
+Velocity (`O/I`) and leverage (`C_r/I`) place each operator in a species class:
 
-| archetype | signature |
+| species | signature |
 |---|---|
-| **Closed-Loop Kinetic** | holds both axes — velocity ≥ 1 *and* leverage ≥ 100 |
-| **Archival Sponge** | high reuse, low generation — leverage ≥ 10, velocity < 1 |
-| **Volatile Ingestor** | generates, doesn't retain — velocity ≥ 0.8, leverage < 2 |
-| **Transient** | low on both axes |
-| **Non-Compounding** | stateless pipe — no `cache_create`, so the cascade can't form |
+| **Cascade Matrix** | holds both axes — velocity ≥ 1 *and* leverage ≥ 100 · recursive processing loop |
+| **Cache Architect** | high reuse, low generation — leverage ≥ 10, velocity < 1 |
+| **Converter Loop** | single-pass velocity — velocity ≥ 0.5, leverage < 2 |
+| **Throughput Pipe** | raw metric bandwidth — low on both axes |
+| **Non-Compounding** | stateless pipe — no `cache_create`, cascade can't form |
 
 ### Scale (V) — the volume axis
 **V = log₁₀(total tokens)** measures how much volume an operator moves. Scale and
 amplification are *independent* axes: a huge operator can have Υ ≈ 0, and a small
 one can have high Υ. That independence is what produces the species map below.
 
-### Species / quadrants (`species_cards.md`)
+### Species / quadrants
 Plot **Scale (V)** against **Amplification (Υ)** and operators sort into four
 species by *which term of the math dominates* — not by who is "better":
 
@@ -213,10 +218,10 @@ finding holds: the cache-dominant operator at the top of the board is also the
 cheapest per token, by an order of magnitude.
 
 ## Demo video
-<!-- TODO: paste YouTube/HF link before submission (60-sec script in TODO.md) -->
+<!-- paste YouTube/HF link here -->
 
 ## Social post
-<!-- TODO: paste link to your X/LinkedIn post before submission (draft in TODO.md) -->
+<!-- paste X/LinkedIn link here -->
 
 ## Notes
 - **Persistence boundary.** Your pasted row is scored live against the field but
@@ -238,3 +243,5 @@ cheapest per token, by an order of magnitude.
 Built for the HF/Gradio Build Small Hackathon · Thousand Token Wood 🍄 · MO§ES™ —
 SigRank began as a word-based ranking of AI operators and a conservation law of
 commitment, then translated into token-domain measurement.
+
+**Built by [SunrisesIllNeverSee](https://github.com/SunrisesIllNeverSee)** · Codex + Claude + Devin
