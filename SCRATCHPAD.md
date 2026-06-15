@@ -40,6 +40,23 @@ cd /Users/dericmchenry/Desktop/moses-sigrank
 
 ## WORK LOG (newest first)
 
+### Devin session — 2026-06-15
+- [done] GPU FIX — applied `@GPU` decorator to `narrate()` in narrate.py (line 60).
+  ZeroGPU needs the inference function decorated or GPU alloc never happens and the
+  model silently template-falls-back every call. `_try_load()` intentionally NOT
+  decorated. No-op fallback path verified (no torch → template, import OK).
+- [done] DEAD-CODE FIX — removed unused `ingest()` from ingest.py (old lines 103-112).
+  Only `ingest_meta()` is called (app.py, sigrank.py). `ingest_meta()` unchanged.
+- [done] README rewrite — kept YAML front matter + all math/formulas/SEED identical.
+  Added Origin (word-based ranking → conservation law of commitment → token domain,
+  with academic-links placeholder), "The full metric system" (cascade diagnostic,
+  4 archetypes from classify(), Scale V, species/quadrant framing — MO§ES = empty
+  quadrant not a ladder), "Benchmark convergence" (AA 7:2:1 → 4.0 baseline = (7+1)/2,
+  two-instrument validation). Restructured so Υ is the ranking metric within the
+  broader system. Demo/Social placeholders untouched. Footer updated with origin.
+- [done] Verify green: compile OK · `python3 metrics.py` → MO§ES Y 18436.98, lev
+  2042.2, 10xDEV 3.31, $/1M 0.527 (unchanged).
+
 ### Claude/Opus session — 2026-06-15
 - [done] Verified baseline green (compile + canonical metrics print correct).
 - [done] FIX 6 — confirmed board CSS grid = 8 tracks, matches 8 header cells (theme.py:58). No code change needed; visual eyeball still owner's call.

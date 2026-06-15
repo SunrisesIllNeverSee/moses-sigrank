@@ -57,6 +57,7 @@ def _template(name, m, klass):
                 f"converting input to output efficiently.")
     return f"**{klass}.** {body}"
 
+@GPU
 def narrate(name, m, klass):
     if not _try_load():
         return _template(name, m, klass)

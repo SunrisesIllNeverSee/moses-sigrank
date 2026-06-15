@@ -100,17 +100,6 @@ def parse_codex(text):
             "cost": tot["cost"] if tot["cost"] > 0 else None}
     return I, O, create, read, meta
 
-def ingest(text):
-    """Returns (i,o,cw,cr)."""
-    text=text.strip()
-    if not text: raise ValueError("empty")
-    if text[0] in "{[":
-        d=json.loads(text)
-        if is_codex_shape(d):
-            i,o,cw,cr,_m = parse_codex(d); return i,o,cw,cr
-        i,o,cw,cr,_c = parse_ccusage(text); return i,o,cw,cr
-    return parse_four(text)
-
 def ingest_meta(text):
     """Returns (i,o,cw,cr,meta) with estimated/caveat/cost."""
     text=text.strip()
