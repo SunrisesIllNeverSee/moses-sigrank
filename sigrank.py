@@ -51,12 +51,12 @@ def _classify(m):
         return "Non-Compounding · stateless pipe"
     v, l = m["velocity"], m["leverage"]
     if v >= 1 and l >= 100:
-        return "Closed-Loop Kinetic · holds both axes"
+        return "Cascade Matrix · recursive processing loop"
     if l >= 10 and v < 1:
-        return "Archival Sponge · high reuse, low generation"
-    if v >= 0.8 and l < 2:
-        return "Volatile Ingestor · generates, doesn't retain"
-    return "Transient · low on both axes"
+        return "Cache Architect · high structural reuse"
+    if v >= 0.5 and l < 2:
+        return "Converter Loop · single-pass processing velocity"
+    return "Throughput Pipe · raw metric bandwidth"
 
 
 def _grab_usage(args):
