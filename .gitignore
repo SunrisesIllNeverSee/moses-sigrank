@@ -5,8 +5,23 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
+.pytest_cache/
 
-# local-only secrets + working notes (never commit credentials)
+# local-only secrets + credentials (never commit)
 SECRETS.local.md
 .env
 .env.*
+
+# internal working / session notes — not for public repo
+SCRATCHPAD.md
+STATUS.md
+FIXES.md
+CODEX.md
+REVIEW.md
+TODO.md
+USAGE.md
+PERSISTENCE_SPEC.md
+SUPABASE_MIGRATION.md
+builddemo.md
+bdemo2.md
+notes:.md.md
